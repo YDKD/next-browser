@@ -1,8 +1,12 @@
 {
-  "name": "next-browser",
+  "name": "@vercel/next-browser",
   "version": "0.1.0",
   "private": true,
   "description": "Headed Playwright browser with React DevTools pre-loaded",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vercel-labs/next-browser.git"
+  },
   "type": "module",
   "files": [
     "src",

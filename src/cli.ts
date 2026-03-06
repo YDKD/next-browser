@@ -144,7 +144,7 @@ console.error(`unknown command: ${cmd}\n`);
 printUsage();
 process.exit(1);
 
-function exit(res: { ok: true; data?: unknown } | { ok: false; error: string }, message: string) {
+function exit(res: { ok: true; data?: unknown } | { ok: false; error: string }, message: string): never {
   if (res.ok) {
     console.log(message);
     process.exit(0);
