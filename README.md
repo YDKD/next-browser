@@ -1,10 +1,14 @@
 # @vercel/next-browser
 
-Headed Chromium with React DevTools pre-loaded, driven over a stateless CLI.
-Built for debugging Next.js PPR shells and React component trees.
+Programmatic access to React DevTools and the Next.js dev server. Everything
+you'd click through in a GUI — component trees, props, hooks, PPR shells,
+build errors, Suspense boundaries — exposed as shell commands that return
+structured text.
 
-Stateless CLI → stateful daemon over a Unix socket. The daemon holds the
-browser open between commands, so each CLI invocation is instant.
+Built for agents. An LLM can't read a DevTools panel, but it can run
+`next-browser tree`, parse the output, and decide what to inspect next. Each
+command is a stateless one-shot against a long-lived browser daemon, so an
+agent loop can fire them off without managing browser lifecycle.
 
 ## Install
 
