@@ -9,7 +9,7 @@ browser open between commands, so each CLI invocation is instant.
 ## Install
 
 ```bash
-pnpm add -D @vercel/next-browser
+pnpm add -g @vercel/next-browser
 ```
 
 Requires Node `>=22.18` (native TypeScript stripping, no build step).
@@ -17,12 +17,12 @@ Requires Node `>=22.18` (native TypeScript stripping, no build step).
 ## Usage
 
 ```bash
-npx next-browser open http://localhost:3000
-npx next-browser tree
-npx next-browser ppr lock
-npx next-browser push /dashboard
-npx next-browser ppr unlock
-npx next-browser close
+next-browser open http://localhost:3000
+next-browser tree
+next-browser ppr lock
+next-browser push /dashboard
+next-browser ppr unlock
+next-browser close
 ```
 
 ## Commands
