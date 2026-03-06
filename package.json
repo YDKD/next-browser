@@ -1,0 +1,28 @@
+{
+  "name": "next-browser",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Headed Playwright browser with React DevTools pre-loaded",
+  "type": "module",
+  "files": [
+    "src",
+    "extensions"
+  ],
+  "bin": {
+    "next-browser": "./src/cli.ts"
+  },
+  "scripts": {
+    "start": "node src/cli.ts",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@next/playwright": "16.2.0-canary.80",
+    "playwright": "^1.50.0",
+    "source-map-js": "^1.2.1"
+  },
+  "packageManager": "pnpm@10.29.2",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}
