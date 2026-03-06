@@ -51,20 +51,6 @@ logs               show recent dev server log output
 network [idx]      list network requests, or inspect one
 ```
 
-## How it works
-
-- Daemon spawns on first CLI call, listens on `~/.next-browser/default.sock`
-- Chromium launched via `launchPersistentContext` with the React DevTools
-  extension sideloaded (`--load-extension`)
-- `installHook.js` pre-injected via `addInitScript` to beat the content-script
-  race — DevTools hook is always available on first render
-- Component tree read directly from `__REACT_DEVTOOLS_GLOBAL_HOOK__` by
-  intercepting the `operations` wire format
-- Source locations resolved via Next's `/__nextjs_original-stack-frames`
-  endpoint, falling back to raw source-map lookup for framework code
-- PPR lock holds `@next/playwright`'s `instant()` callback open across CLI
-  calls so you can poke at the frozen shell interactively
-
 ## License
 
 MIT
