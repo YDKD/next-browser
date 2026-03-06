@@ -1,11 +1,9 @@
 ---
 name: next-browser
 description: >-
-  Next.js browser debugger for PPR shell optimization. Launches headed Chromium
-  with React DevTools. Use when analyzing PPR (Partial Prerendering), finding
-  Suspense boundary blockers, debugging React component trees, or optimizing
-  initial page load / client navigation. Triggers: "optimize PPR", "analyze shell",
-  "find dynamic holes", "what's blocking suspense", "PPR analysis", "next-browser"
+  CLI that gives agents what humans get from React DevTools and the Next.js
+  dev overlay — component trees, props, hooks, PPR shells, errors, network —
+  as shell commands that return structured text.
 ---
 
 # next-browser
