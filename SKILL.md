@@ -351,12 +351,12 @@ has a `fallback`. `scrollHeight > 0` with heading/logo visible = done.
 ### Baseline
 
 ```
-nb open <url>
-nb errors                              # must be clean first
-nb ppr lock && nb goto <url>           # goto = initial load shell
-nb screenshot                          # the "before"
-nb eval 'document.body.scrollHeight'   # 0 = empty shell
-nb ppr unlock                          # prints hole analysis
+next-browser open <url>
+next-browser errors                               # must be clean first
+next-browser ppr lock && next-browser goto <url>  # goto = initial load shell
+next-browser screenshot                           # the "before"
+next-browser eval 'document.body.scrollHeight'    # 0 = empty shell
+next-browser ppr unlock                           # prints hole analysis
 ```
 
 ### Reading `ppr unlock` output
@@ -408,7 +408,7 @@ async function Inner({ searchParams }) {
 |---|---|---|
 | Bailout, stack is all framework frames | An `await` runs before any `<Suspense>` is returned | Fix B above |
 | `await params` bails even with `generateStaticParams` | `generateStaticParams` controls build-time route gen, not the runtime prerender — `params` is still a Promise | Fix B — push `await params` into a child inside Suspense |
-| Fix looks correct, still bails | Stale dev module cache | `nb restart-server` before debugging further |
+| Fix looks correct, still bails | Stale dev module cache | `next-browser restart-server` before debugging further |
 | Removed a no-fallback blanket Suspense, now everything bails | It was silently catching every unwrapped dynamic call below it | Add inner boundaries *first*, remove the blanket *last* |
 | Fallback itself doesn't render in shell | Fallback is a client component that suspends on chunk loads or router hooks | Use pure server JSX (static SVGs, divs) in fallbacks |
 | Dynamic API flagged, but you wrapped the call site | A `cache()`/deduped wrapper started the promise at an earlier unwrapped call site | Find and wrap the *first* caller |
@@ -419,14 +419,14 @@ The bailout stack has no user frames. Locate it manually.
 
 **First:** check normal-mode errors — they have real stacks:
 ```
-nb goto <url> && nb errors
+next-browser goto <url> && next-browser errors
 ```
 
 **Then** wrap progressively larger subtrees in
 `<Suspense fallback={<div>MARKER</div>}>` and probe under lock:
 ```
-nb ppr lock && nb goto <url>
-nb eval 'document.getElementById("__NEXT_DATA__") ? "BAILOUT" : document.body.innerText.slice(0,100)'
+next-browser ppr lock && next-browser goto <url>
+next-browser eval 'document.getElementById("__NEXT_DATA__") ? "BAILOUT" : document.body.innerText.slice(0,100)'
 ```
 
 - Still `BAILOUT` → culprit is outside/above (check `await` before `return`)
@@ -471,8 +471,8 @@ async function LayoutInner({ params, children }) {
 ### Verify
 
 ```
-nb goto <url> && nb errors             # clean
-nb ppr lock && nb goto <url>           # initial load shell
-nb screenshot                          # visible shell
-nb ppr unlock                          # every visual hole has a fallback
+next-browser goto <url> && next-browser errors    # clean
+next-browser ppr lock && next-browser goto <url>  # initial load shell
+next-browser screenshot                           # visible shell
+next-browser ppr unlock                           # every visual hole has a fallback
 ```
