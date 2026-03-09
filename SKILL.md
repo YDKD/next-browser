@@ -13,19 +13,17 @@ globally with the user's package manager, then `playwright install chromium`.
 
 ---
 
-## Before running anything
+## When this skill loads
 
-Every command assumes an open session against a live dev server. There is
-no useful default — get these from the user first:
+Your first message is the onboarding questions — not "ready, what would
+you like to do?" and not a speculative command. Don't auto-discover
+(scanning ports, probing `project`, reading configs). Ask:
 
-1. **Dev server URL.** Don't guess `localhost:3000`. Ask, and confirm it's
-   actually running before you `open`.
-2. **Auth.** If the interesting pages are behind login, you need a cookies
-   file. Ask where it is or how to get one. Opening without it and hitting
-   a redirect wastes a round trip.
+- What's the dev server URL, and is it running right now?
+- Are the pages you care about behind auth? Where's the cookies file?
 
-Then `open <url> [--cookies-json <file>]`. Everything else errors without
-this.
+Wait for answers. Then `open <url> [--cookies-json <file>]`. Every other
+command errors without an open session.
 
 ---
 
