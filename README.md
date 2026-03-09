@@ -28,6 +28,7 @@ npx skills add vercel-labs/next-browser
 ```
 
 Works with Claude Code, Cursor, Cline, and [others](https://skills.sh).
+Run `npx skills upgrade` to pull the latest version.
 
 Then start a session by typing `/next-browser` to the agent. The skill
 runs an onboarding (dev server URL, cookies) before touching the CLI —
