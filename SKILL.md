@@ -13,6 +13,22 @@ globally with the user's package manager, then `playwright install chromium`.
 
 ---
 
+## Before running anything
+
+Every command assumes an open session against a live dev server. There is
+no useful default — get these from the user first:
+
+1. **Dev server URL.** Don't guess `localhost:3000`. Ask, and confirm it's
+   actually running before you `open`.
+2. **Auth.** If the interesting pages are behind login, you need a cookies
+   file. Ask where it is or how to get one. Opening without it and hitting
+   a redirect wastes a round trip.
+
+Then `open <url> [--cookies-json <file>]`. Everything else errors without
+this.
+
+---
+
 ## Commands
 
 ### `open <url> [--cookies-json <file>]`
