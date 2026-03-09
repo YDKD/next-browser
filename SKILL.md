@@ -8,9 +8,8 @@ description: >-
 
 # next-browser
 
-`npm install -g @vercel/next-browser` then `npx playwright install chromium`.
-
-Daemon at `~/.next-browser/default.sock`. One browser, one page.
+If `next-browser` is not already on PATH, install `@vercel/next-browser`
+globally with the user's package manager, then `playwright install chromium`.
 
 ---
 
@@ -45,9 +44,7 @@ $ next-browser goto http://localhost:3024/vercel/~/deployments
 
 ### `push [path]`
 
-Client-side navigation via `next.router.push()`. Needs the route to be
-prefetched — a `<Link>` to the target must exist on the current page.
-Without a path, shows an interactive picker of all links (↑/↓, enter).
+Client-side navigation via `next.router.push()`. Without a path, shows an interactive picker of all links (↑/↓, enter).
 
 ```
 $ next-browser push /vercel/~/deployments
@@ -70,14 +67,21 @@ Restart the Next.js dev server (POSTs to `/__nextjs_restart_dev`).
 Clears filesystem cache, forces clean recompile. Polls until the server
 has a new execution ID, then reloads the page.
 
+Last resort. HMR picks up code changes on its own — reach for this only
+when you have evidence the dev server is wedged (stale output after edits,
+builds that never finish, errors that don't clear).
+
 ---
 
 ### `ppr lock`
 
 Enter PPR instant-navigation mode. Sets the `next-instant-navigation-testing`
 cookie. After this:
-- `goto` — server sends raw PPR shell (static HTML with `<template>` holes)
-- `push` — Next.js router blocks dynamic data writes, shows prefetched shell
+- `goto` — server sends raw PPR shell (static HTML with `<template>` holes).
+  No hydration — what you see is server HTML only.
+- `push` — Next.js router blocks dynamic data writes, shows prefetched shell.
+  Requires the current page to already be hydrated (prefetch is client-side),
+  so lock *after* you've landed on the origin, not before.
 
 ```
 $ next-browser ppr lock
@@ -118,8 +122,9 @@ unlocked
 Each hole shows: boundary name + source, `rendered by:` ownership chain,
 `blocked by:` the dynamic calls (hooks, server APIs, scripts, cache, etc.)
 
-**After making code changes, ALWAYS check errors before PPR analysis.**
-Build errors produce empty/misleading output.
+**`errors` doesn't report while locked.** If the shell looks wrong (empty,
+bailed to CSR), unlock and `goto` the page normally, then run `errors`.
+Don't debug blind under the lock.
 
 ---
 
@@ -339,140 +344,48 @@ Inspect a server action by its ID (from `next-action` header in network list).
 
 ---
 
-## Initial PPR Shell Optimization
+## Scenarios
 
-**Scope: initial page load only** — the server-rendered static HTML sent
-on first request. Uses `goto` (full document load) under `ppr lock`.
-Not the client-nav (`push`) shell — that's a separate concern.
+### Growing the static shell
 
-Goal: every dynamic region in the initial shell either renders `null` or
-has a `fallback`. `scrollHeight > 0` with heading/logo visible = done.
+The shell is what the user sees the instant they land — before any dynamic
+data arrives. The measure is the screenshot while locked: does it read as
+the page itself? A shell can be non-empty and still bad — one Suspense
+fallback wrapping the whole content area renders *something*, but it's a
+monolithic loading state, not the page.
 
-### Baseline
+A meaningful shell is the real component tree with small, local fallbacks
+where data is genuinely pending. Getting there means the composition layer
+— the layouts and wrappers between those leaf boundaries — can't itself
+suspend. `ppr unlock` names what suspended (`blocked by:`) and where it
+sits (`rendered by:`). A suspend high in the tree is what collapses
+everything beneath it into one fallback.
 
-```
-next-browser open <url>
-next-browser errors                               # must be clean first
-next-browser ppr lock && next-browser goto <url>  # goto = initial load shell
-next-browser screenshot                           # the "before"
-next-browser eval 'document.body.scrollHeight'    # 0 = empty shell
-next-browser ppr unlock                           # prints hole analysis
-```
+Work it top-down. For the component that's suspending: can the dynamic
+access move into a child? If yes, move it — this component becomes sync
+and rejoins the shell. Follow the access down and ask again.
 
-### Reading `ppr unlock` output
+When you reach a component where it can't move any lower, there are two
+exits — both are human calls, bring the question to them:
 
-For each entry under `## Dynamic holes`:
+- Wrap it in a Suspense boundary. The fallback UI should resemble what
+  renders inside — design it together, don't assume.
+- Cache it so it's available at prerender (Cache Components). Whether
+  this data is safe to cache — staleness, who sees it — is their call,
+  not yours.
 
-| Hole pattern | Action |
-|---|---|
-| Wraps a component that returns `null` (telemetry, analytics, hooks-only provider) | Skip — zero visual cost |
-| Already has a `fallback` in the code | Skip — working |
-| Wraps visible UI, no fallback | Wrap it |
-| `blocked by: ... awaited in <Page>` or `<Layout>` (the segment export itself) | The `await` runs before JSX exists — push it down (see fix B) |
+There are two shells depending on how the user arrives.
 
-### The two fixes
+**Direct load — the PPR shell.** Server HTML for a cold hit on the URL.
+Lock first, then `goto` the target — the lock suppresses hydration so you
+see exactly what the server sent. Screenshot once the load settles, then
+unlock.
 
-**A. Unwrapped dynamic component** — add a boundary:
-```tsx
-<Suspense fallback={<StaticThing />}>
-  <DynamicThing />
-</Suspense>
-```
+**Client navigation — the prefetched shell.** What the router already
+holds when a link is clicked. The origin page decides this — it's the one
+doing the prefetching — so `goto` the origin *unlocked* and let it fully
+hydrate. Then lock, `push` to the target, let the navigation settle,
+screenshot, unlock. Locking before the origin hydrates means nothing got
+prefetched and `push` has nothing to show.
 
-**B. `await` before `return` in an async page/layout** — the boundary
-doesn't exist yet when the await suspends. Push the await into a child:
-```tsx
-// before: suspends at line 2, <Suspense> on line 3 never mounts
-export default async function Page({ searchParams }) {
-  const sp = await searchParams;
-  return <Suspense fallback={<Skeleton />}>...</Suspense>;
-}
-
-// after: sync wrapper, await inside the boundary
-export default function Page({ searchParams }) {
-  return (
-    <Suspense fallback={<Skeleton />}>
-      <Inner searchParams={searchParams} />
-    </Suspense>
-  );
-}
-async function Inner({ searchParams }) {
-  const sp = await searchParams;
-  ...
-}
-```
-
-### Gotchas
-
-| Symptom | Cause | Fix |
-|---|---|---|
-| Bailout, stack is all framework frames | An `await` runs before any `<Suspense>` is returned | Fix B above |
-| `await params` bails even with `generateStaticParams` | `generateStaticParams` controls build-time route gen, not the runtime prerender — `params` is still a Promise | Fix B — push `await params` into a child inside Suspense |
-| Fix looks correct, still bails | Stale dev module cache | `next-browser restart-server` before debugging further |
-| Removed a no-fallback blanket Suspense, now everything bails | It was silently catching every unwrapped dynamic call below it | Add inner boundaries *first*, remove the blanket *last* |
-| Fallback itself doesn't render in shell | Fallback is a client component that suspends on chunk loads or router hooks | Use pure server JSX (static SVGs, divs) in fallbacks |
-| Dynamic API flagged, but you wrapped the call site | A `cache()`/deduped wrapper started the promise at an earlier unwrapped call site | Find and wrap the *first* caller |
-
-### Bisecting `NEXT_STATIC_GEN_BAILOUT`
-
-The bailout stack has no user frames. Locate it manually.
-
-**First:** check normal-mode errors — they have real stacks:
-```
-next-browser goto <url> && next-browser errors
-```
-
-**Then** wrap progressively larger subtrees in
-`<Suspense fallback={<div>MARKER</div>}>` and probe under lock:
-```
-next-browser ppr lock && next-browser goto <url>
-next-browser eval 'document.getElementById("__NEXT_DATA__") ? "BAILOUT" : document.body.innerText.slice(0,100)'
-```
-
-- Still `BAILOUT` → culprit is outside/above (check `await` before `return`)
-- `MARKER` renders → culprit is inside → narrow further
-
-Work outermost → innermost. The culprit is almost always an `await` at
-the top of an async layout/page body.
-
-### Static shell fallback
-
-When a layout branches on dynamic data, mirror the common-path structure
-in the fallback. Reuse the same structural components and classes so
-there's no layout shift on hydration:
-
-```tsx
-function Shell() {
-  return (
-    <div className="same-wrapper">
-      <Header logo={<StaticSvg />} actions={<Skeleton />} />
-      <Main className="same-classes">
-        <PageSkeleton />
-        <Footer />
-      </Main>
-    </div>
-  );
-}
-
-export default function Layout(props) {
-  return (
-    <Suspense fallback={<Shell />}>
-      <LayoutInner {...props} />
-    </Suspense>
-  );
-}
-
-async function LayoutInner({ params, children }) {
-  const p = await params;  // suspends here → Shell renders
-  ...
-}
-```
-
-### Verify
-
-```
-next-browser goto <url> && next-browser errors    # clean
-next-browser ppr lock && next-browser goto <url>  # initial load shell
-next-browser screenshot                           # visible shell
-next-browser ppr unlock                           # every visual hole has a fallback
-```
+Between iterations: check `errors` while unlocked.
