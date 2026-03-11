@@ -50,8 +50,26 @@ this tool — and propose targeted additions to `SKILL.md`.
 
    Ask the user to approve or reject each one before editing SKILL.md.
 
-5. **Apply approved changes** to `SKILL.md` — add them inline to the
-   relevant command section, not as a separate "tips" block.
+5. **Consider new Scenarios.** Beyond command-level learnings, check
+   whether the transcript reveals a scenario not covered in the existing
+   `## Scenarios` section of SKILL.md. A scenario earns its place only if
+   it requires **domain knowledge an agent wouldn't derive on its own** —
+   non-obvious mental models, ordering constraints, or decision frameworks
+   that go beyond "use these commands and compare results."
+
+   Ask yourself: could an agent figure out this workflow just by reading
+   the existing command docs and applying basic debugging instincts? If
+   yes, it's not a scenario — it's just competent tool use. If no — if it
+   requires understanding something about React, Next.js, or the PPR model
+   that isn't in the CLI docs — then it's a candidate.
+
+   Present scenario candidates the same way as command learnings: evidence
+   from the transcript, proposed text, and why an agent couldn't get there
+   alone. Ask for approval before adding.
+
+6. **Apply approved changes** to `SKILL.md` — add command-level learnings
+   inline to the relevant command section, and scenarios to the
+   `## Scenarios` section.
 
 ## Anti-patterns
 
