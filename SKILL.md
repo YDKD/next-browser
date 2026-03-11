@@ -306,6 +306,10 @@ Use this to read the Next.js error overlay (it's in shadow DOM).
 For multi-statement code that uses `return`, wrap in an IIFE:
 `next-browser eval '(() => { const els = ...; return els.length; })()'`
 
+`eval` runs synchronously in page context — top-level `await` is not
+supported. Wrap in an async IIFE if you need to await:
+`next-browser eval '(async () => { ... })()'`.
+
 ---
 
 ### `errors`

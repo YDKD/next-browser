@@ -67,9 +67,9 @@ this tool — and propose targeted additions to `SKILL.md`.
    from the transcript, proposed text, and why an agent couldn't get there
    alone. Ask for approval before adding.
 
-6. **Apply approved changes** to `SKILL.md` — add command-level learnings
-   inline to the relevant command section, and scenarios to the
-   `## Scenarios` section.
+6. **Apply approved changes** to the repo-root `SKILL.md` — add
+   command-level learnings inline to the relevant command section, and
+   scenarios to the `## Scenarios` section.
 
 ## Anti-patterns
 
