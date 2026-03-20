@@ -138,9 +138,14 @@ if (cmd === "goto") {
   exit(res, res.ok ? `→ ${res.data}` : "");
 }
 
-if (cmd === "ssr-goto") {
-  const res = await send("ssr-goto", { url: arg });
-  exit(res, res.ok ? `→ ${res.data} (external scripts blocked)` : "");
+if (cmd === "ssr" && arg === "lock") {
+  const res = await send("ssr-lock");
+  exit(res, "ssr locked — external scripts blocked on all navigations");
+}
+
+if (cmd === "ssr" && arg === "unlock") {
+  const res = await send("ssr-unlock");
+  exit(res, "ssr unlocked — external scripts re-enabled");
 }
 
 
@@ -342,7 +347,8 @@ function printUsage() {
       "  close              close browser and daemon\n" +
       "\n" +
       "  goto <url>         full-page navigation (new document load)\n" +
-      "  ssr-goto <url>     goto but block external scripts (SSR shell)\n" +
+      "  ssr lock           block external scripts on all navigations\n" +
+      "  ssr unlock         re-enable external scripts\n" +
       "  push [path]        client-side navigation (interactive picker if no path)\n" +
       "  back               go back in history\n" +
       "  reload             reload current page\n" +

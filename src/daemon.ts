@@ -104,9 +104,13 @@ async function run(cmd: Cmd) {
     const data = await browser.goto(cmd.url!);
     return { ok: true, data };
   }
-  if (cmd.action === "ssr-goto") {
-    const data = await browser.ssrGoto(cmd.url!);
-    return { ok: true, data };
+  if (cmd.action === "ssr-lock") {
+    await browser.ssrLock();
+    return { ok: true };
+  }
+  if (cmd.action === "ssr-unlock") {
+    await browser.ssrUnlock();
+    return { ok: true };
   }
   if (cmd.action === "back") {
     await browser.back();

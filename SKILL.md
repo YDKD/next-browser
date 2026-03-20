@@ -113,22 +113,28 @@ Go back one page in browser history.
 
 Reload the current page from the server.
 
-### `ssr-goto <url>`
+### `ssr lock`
 
-See exactly what the server sent before any client-side JavaScript runs.
-Useful for verifying SSR content, checking what search engines and social
-crawlers see, debugging hydration mismatches, and confirming that data
-appears in the initial HTML rather than being fetched client-side.
-
-The page renders without hydration — no React, no client-side routing,
-no fetch calls. What you see is the raw server output plus CSS.
+Block external scripts on all subsequent navigations. While locked, every
+`goto`, `push`, `back`, and `reload` shows the raw server-rendered HTML
+without React hydration or client-side JavaScript — what search engines
+and social crawlers see.
 
 ```
-$ next-browser ssr-goto http://localhost:3000/dashboard
-→ http://localhost:3000/dashboard (external scripts blocked)
+$ next-browser ssr lock
+ssr locked — external scripts blocked on all navigations
 ```
 
-Use `goto` or `reload` afterward to restore normal behavior.
+### `ssr unlock`
+
+Re-enable external scripts. The next navigation will load normally with
+full hydration.
+
+```
+$ next-browser ssr unlock
+ssr unlocked — external scripts re-enabled
+```
+
 
 ### `perf [url]`
 
