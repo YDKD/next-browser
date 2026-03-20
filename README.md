@@ -46,7 +46,8 @@ Requires Node >= 20.
 | Command            | Description                                               |
 | ------------------ | --------------------------------------------------------- |
 | `goto <url>`       | Full-page navigation (new document load)                  |
-| `ssr-goto <url>`   | Navigate blocking external scripts (inspect SSR shell)    |
+| `ssr lock`         | Block external scripts on all navigations (SSR-only mode) |
+| `ssr unlock`       | Re-enable external scripts                                |
 | `push [path]`      | Client-side navigation (interactive picker if no path)    |
 | `back`             | Go back in history                                        |
 | `reload`           | Reload current page                                       |

@@ -37,6 +37,19 @@ let context: BrowserContext | null = null;
 let page: Page | null = null;
 let profileDirPath: string | null = null;
 let initialOrigin: string | null = null;
+let ssrLocked = false;
+
+/** Install or remove the script-blocking route handler based on ssrLocked. */
+async function syncSsrRoutes() {
+  if (!page) return;
+  await page.unrouteAll({ behavior: "wait" });
+  if (ssrLocked) {
+    await page.route("**/*", (route) => {
+      if (route.request().resourceType() === "script") return route.abort();
+      return route.continue();
+    });
+  }
+}
 
 // ── Browser lifecycle ────────────────────────────────────────────────────────
 
@@ -46,11 +59,12 @@ let initialOrigin: string | null = null;
  * reuse the existing context.
  */
 export async function open(url: string | undefined) {
-  if (!context) {
-    context = await launch();
-    page = context.pages()[0] ?? (await context.newPage());
-    net.attach(page);
+  if (context) {
+    await close();
   }
+  context = await launch();
+  page = context.pages()[0] ?? (await context.newPage());
+  net.attach(page);
   if (url) {
     initialOrigin = new URL(url).origin;
     await page!.goto(url, { waitUntil: "domcontentloaded" });
@@ -77,6 +91,7 @@ export async function close() {
   page = null;
   release = null;
   settled = null;
+  ssrLocked = false;
   // Clean up temp profile directory.
   if (profileDirPath) {
     const { rmSync } = await import("node:fs");
@@ -102,7 +117,7 @@ let settled: Promise<void> | null = null;
 /** Enter PPR instant-navigation mode. The cookie is set immediately. */
 export function lock() {
   if (!page) throw new Error("browser not open");
-  if (release) throw new Error("already locked");
+  if (release) return Promise.resolve();
 
   return new Promise<void>((locked) => {
     settled = instant(page!, () => {
@@ -247,6 +262,28 @@ async function waitForDevToolsReconnect(p: Page) {
     if (connected) return;
     await new Promise((r) => setTimeout(r, 200));
   }
+}
+
+// ── SSR lock/unlock ──────────────────────────────────────────────────────────
+//
+// While SSR-locked, every navigation blocks external script resources so the
+// page renders only the server-side HTML shell (no React hydration, no client
+// bundles). Useful for inspecting raw SSR output across multiple navigations.
+
+/** Enter SSR-locked mode. All subsequent navigations block external scripts. */
+export async function ssrLock() {
+  if (!page) throw new Error("browser not open");
+  if (ssrLocked) return;
+  ssrLocked = true;
+  await syncSsrRoutes();
+}
+
+/** Exit SSR-locked mode. Re-enables external scripts. */
+export async function ssrUnlock() {
+  if (!page) throw new Error("browser not open");
+  if (!ssrLocked) return;
+  ssrLocked = false;
+  await syncSsrRoutes();
 }
 
 // ── Navigation ───────────────────────────────────────────────────────────────
@@ -462,32 +499,10 @@ export async function push(path: string) {
 
 /** Full-page navigation (new document load). Resolves relative URLs against the current page. */
 export async function goto(url: string) {
-  if (!page) throw new Error("browser not open");
-  await page.unrouteAll({ behavior: "wait" });
-  const target = new URL(url, page.url()).href;
+  if (!page) await open(undefined);
+  const target = new URL(url, page!.url()).href;
   initialOrigin = new URL(target).origin;
-  await page.goto(target, { waitUntil: "domcontentloaded" });
-  return target;
-}
-
-/**
- * Navigate like goto but block external script resources.
- * The HTML loads and inline <script> blocks still execute, but external JS
- * bundles (React, hydration, etc.) are aborted. Shows the SSR shell.
- */
-export async function ssrGoto(url: string) {
-  if (!page) throw new Error("browser not open");
-  const target = new URL(url, page.url()).href;
-  initialOrigin = new URL(target).origin;
-
-  // Clear any stale route handlers from previous ssr-goto calls.
-  await page.unrouteAll({ behavior: "wait" });
-
-  await page.route("**/*", (route) => {
-    if (route.request().resourceType() === "script") return route.abort();
-    return route.continue();
-  });
-  await page.goto(target, { waitUntil: "domcontentloaded" });
+  await page!.goto(target, { waitUntil: "domcontentloaded" });
   return target;
 }
 
