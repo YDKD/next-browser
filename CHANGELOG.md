@@ -1,5 +1,13 @@
 # @vercel/next-browser
 
+## 0.3.0
+
+### Minor Changes
+
+- [#12](https://github.com/vercel-labs/next-browser/pull/12) [`c3afe66`](https://github.com/vercel-labs/next-browser/commit/c3afe66b840def548ca2b1113b955bb54942b404) Thanks [@gaojude](https://github.com/gaojude)! - Add `preview` command for visual feedback and `--full-page` flag for `screenshot`
+
+- [#10](https://github.com/vercel-labs/next-browser/pull/10) [`3e2704b`](https://github.com/vercel-labs/next-browser/commit/3e2704b6ed631a3013f6692072afd8a75e466a05) Thanks [@gaojude](https://github.com/gaojude)! - Replace `ssr-goto` with `ssr lock` / `ssr unlock` for persistent SSR inspection across navigations. Auto-open browser on `goto` when not already open. Make lock commands idempotent.
+
 ## 0.2.0
 
 ### Minor Changes
