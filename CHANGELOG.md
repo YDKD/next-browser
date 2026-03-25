@@ -1,5 +1,17 @@
 # @vercel/next-browser
 
+## 0.4.0
+
+### Minor Changes
+
+- [#16](https://github.com/vercel-labs/next-browser/pull/16) [`0d1c5f2`](https://github.com/vercel-labs/next-browser/commit/0d1c5f2d009f8ad8b31b68fcd38e5f77b698587c) Thanks [@gaojude](https://github.com/gaojude)! - Add `browser-logs` command to capture browser console output
+
+- [#18](https://github.com/vercel-labs/next-browser/pull/18) [`08d49f5`](https://github.com/vercel-labs/next-browser/commit/08d49f5606482cc9b88a6428db58d737265cdc15) Thanks [@gaojude](https://github.com/gaojude)! - Add `renders start` and `renders stop` commands for React re-render profiling
+
+### Patch Changes
+
+- [#19](https://github.com/vercel-labs/next-browser/pull/19) [`18eb8e8`](https://github.com/vercel-labs/next-browser/commit/18eb8e8220b2ff507ccb9fcc0e2164e068dd9fcb) Thanks [@gaojude](https://github.com/gaojude)! - Remove `prototypes/` directory
+
 ## 0.3.0
 
 ### Minor Changes
